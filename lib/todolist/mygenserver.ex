@@ -1,56 +1,35 @@
 defmodule TodoList.MyGenServer do
   def start do
-    {:ok, spawn(fn -> loop({1, []}) end)}
+    MyGenServer.start(__MODULE__, {1, []})
   end
 
   def add(pid, name) do
-    send(pid, {:add, name})
-
-    :ok
+    MyGenServer.cast(pid, {:add, name})
   end
 
   def done(pid, id) do
-    send(pid, {{:done, id}, self()})
-
-    receive do
-      {:reply, value} ->
-        value
-    end
+    MyGenServer.call(pid, {:done, id})
   end
 
   def list(pid) do
-    send(pid, {:list, self()})
-
-    receive do
-      {:reply, value} ->
-        value
-    end
+    MyGenServer.call(pid, :list)
   end
 
   def remove(pid, id) do
-    send(pid, {{:remove, id}, self()})
-
-    receive do
-      {:reply, value} ->
-        value
-    end
+    MyGenServer.call(pid, {:remove, id})
   end
 
-  defp loop({id, list}) do
-    receive do
-      {:add, name} ->
-        loop({id + 1, TodoList.add(list, id, name)})
-      {{:done, current_id}, pid} ->
-        new_list = TodoList.done(list, current_id)
-        send(pid, {:reply, :ok})
-        loop({id, new_list})
-      {:list, pid} ->
-        send(pid, {:reply, list})
-        loop({id, list})
-      {{:remove, current_id}, pid} ->
-        new_list = TodoList.remove(list, current_id)
-        send(pid, {:reply, :ok})
-        loop({id, new_list})
-    end
+  def handle_call({:done, current_id}, _pid, {id, list}) do
+    {:reply, :ok, {id, TodoList.done(list, current_id)}}
+  end
+  def handle_call(:list, _pid, state = {_id, list}) do
+    {:reply, list, state}
+  end
+  def handle_call({:remove, current_id}, _pid, {id, list}) do
+    {:reply, :ok, {id, TodoList.remove(list, current_id)}}
+  end
+
+  def handle_cast({:add, name}, {id, list}) do
+    {:noreply, {id + 1, TodoList.add(list, id, name)}}
   end
 end
