@@ -3,6 +3,39 @@ defmodule TodoList.Process do
     {:ok, spawn(fn -> loop({1, []}) end)}
   end
 
+  def add(pid, name) do
+    send(pid, {:add, name})
+
+    :ok
+  end
+
+  def done(pid, id) do
+    send(pid, {{:done, id}, self()})
+
+    receive do
+      {:reply, value} ->
+        value
+    end
+  end
+
+  def list(pid) do
+    send(pid, {:list, self()})
+
+    receive do
+      {:reply, value} ->
+        value
+    end
+  end
+
+  def remove(pid, id) do
+    send(pid, {{:remove, id}, self()})
+
+    receive do
+      {:reply, value} ->
+        value
+    end
+  end
+
   defp loop({id, list}) do
     receive do
       {:add, name} ->

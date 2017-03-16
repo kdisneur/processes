@@ -10,36 +10,27 @@ defmodule TodoList.ProcessTest do
   test "add: adds new todo in a todo list" do
     {:ok, pid} = TodoList.Process.start
 
-    send(pid, {:add, "Code"})
-    send(pid, {:add, "Eat"})
-
-    send(pid, {:list, self()})
-    assert_receive {:reply, [{1, "Code", false}, {2, "Eat", false}]}
+    assert :ok == TodoList.Process.add(pid, "Code")
+    assert :ok == TodoList.Process.add(pid, "Eat")
+    assert [{1, "Code", false}, {2, "Eat", false}] == TodoList.Process.list(pid)
   end
 
   test "done: mark a todo as done" do
     {:ok, pid} = TodoList.Process.start
 
-    send(pid, {:add, "Code"})
-    send(pid, {:add, "Eat"})
-    send(pid, {{:done, 2}, self()})
-
-    send(pid, {:list, self()})
-    assert_receive {:reply, [{1, "Code", false}, {2, "Eat", true}]}
+    assert :ok == TodoList.Process.add(pid, "Code")
+    assert :ok == TodoList.Process.add(pid, "Eat")
+    assert :ok == TodoList.Process.done(pid, 2)
+    assert [{1, "Code", false}, {2, "Eat", true}] == TodoList.Process.list(pid)
   end
 
   test "remove: deletes a todo" do
     {:ok, pid} = TodoList.Process.start
 
-    send(pid, {:add, "Code"})
-    send(pid, {:add, "Eat"})
-
-    send(pid, {:list, self()})
-    assert_receive {:reply, [{1, "Code", false}, {2, "Eat", false}]}
-
-    send(pid, {{:remove, 2}, self()})
-
-    send(pid, {:list, self()})
-    assert_receive {:reply, [{1, "Code", false}]}
+    assert :ok == TodoList.Process.add(pid, "Code")
+    assert :ok == TodoList.Process.add(pid, "Eat")
+    assert [{1, "Code", false}, {2, "Eat", false}] == TodoList.Process.list(pid)
+    assert :ok == TodoList.Process.remove(pid, 2)
+    assert [{1, "Code", false}] == TodoList.Process.list(pid)
   end
 end
